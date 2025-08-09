@@ -1,59 +1,59 @@
-// imports
-const express = require("express") //importing express package
-const app = express() // creates a express application
-const dotenv = require("dotenv").config() //this allows me to use my .env values in this file
-const morgan = require("morgan")
-const methodOverride = require("method-override")
-const conntectToDB = require('./config/db')
-
-
-
-
-
+// Imports
+const express = require("express");
+const app = express();
+const dotenv = require("dotenv").config();
+const morgan = require("morgan");
+const methodOverride = require("method-override");
+const connectToDB = require('./config/db');
+const Recipe = require('./models/recipe'); 
 
 // Middleware
-app.use(express.static('public')); //all static files are in the public folder
-app.use(express.urlencoded({ extended: false })); // this will allow us to see the data being sent in the POST or PUT
-app.use(methodOverride("_method")); // Changes the method based on the ?_method
-app.use(morgan("dev")) // logs the requests as they are sent to our sever in the terminal
+app.use(express.static('public'));
+app.use(express.urlencoded({ extended: false }));
+app.use(methodOverride("_method"));
+app.use(morgan("dev"));
+
+// Connect to MongoDB
+connectToDB();
+
+// ========== Functions ========== //
 
 
 
 
-// connect to database
-conntectToDB()
+async function createRecipe() {
+  const newRecipe = {
+    name: "Um Ali",
+    ingredients: ["Puff Pastry", "Milk"],
+    instructions: "bake at 180C",
+    prepTime: 120,
+    difficulty: "Medium"
+  };
 
-
-async function createRecipe(){
-
-const newRecipe = {
- name: "Um Ali",
- ingredients: ["Puff Pastry","Milk"],
- instructions: "bake at 180C",
- prepTime: 120,
- difficulty: "Medium"
+  try {
+    const createdRecipe = await Recipe.create(newRecipe);
+    console.log("Created Recipe:", createdRecipe);
+  } catch (err) {
+    console.log("Failed to create recipe.");
+  }
 }
 
-    const createdRecipe = await Recipe.create(newRecipe)
-    console.log(createdRecipe)
-}
-
-createRecipe()
-
-async function getAl(params) {
-    
+async function getAllRecipes() {
+  try {
+    const recipes = await Recipe.find();
+    recipes.forEach(recipe => {
+      console.log(`${recipe.name} is an ${recipe.difficulty} recipe and takes ${recipe.prepTime} minutes to prepare.`);
+    });
+  } catch (err) {
+    console.log("Failed to fetch recipes.");
+  }
 }
 
 
 
 async function updateRecipe(recipeId, newRecipeData) {
   try {
-    const updatedRecipe = await Recipe.findByIdAndUpdate(
-      recipeId,
-      newRecipeData,
-      { new: true }  // return the updated document
-    );
-
+    const updatedRecipe = await Recipe.findByIdAndUpdate(recipeId, newRecipeData, { new: true });
     if (updatedRecipe) {
       console.log("Updated Recipe:", updatedRecipe);
     } else {
@@ -61,11 +61,7 @@ async function updateRecipe(recipeId, newRecipeData) {
     }
   } catch (error) {
     console.error("Error updating recipe:", error.message);
-  }
-}
-
-
-
+  }}
 
 
 
@@ -86,21 +82,21 @@ async function deleteRecipe(recipeId) {
 
 
 
+async function getRecipeById(id) {
+  try {
+    const recipe = await Recipe.findById(id);
+    if (recipe) {
+      console.log("Found Recipe:", recipe);
+    } else {
+      console.log("No recipe with this ID exists.");
+    }
+  } catch (error) {
+    console.error("Error finding recipe:", error.message);
+  }
+}
 
 
-
-
-
-
-
-// Routes go here
-
-
-const port = process.env.PORT || 3000
-
-
-app.listen(port,()=>{
-    console.log("Listening on port " + port)
-}) 
-
-
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log("Listening on port " + port);
+});
